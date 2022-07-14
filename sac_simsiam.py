@@ -210,6 +210,7 @@ class SacSimsiamAgent(object):
         encoder_feature_dim=50,
         encoder_lr=1e-3,
         encoder_tau=0.005,
+        repr_update_freq = 1,
         num_layers=4,
         num_filters=32
     ):
@@ -219,7 +220,7 @@ class SacSimsiamAgent(object):
         self.encoder_tau = encoder_tau
         self.actor_update_freq = actor_update_freq
         self.critic_target_update_freq = critic_target_update_freq
-        self.repr_update_freq = 1 # need to be parameter
+        self.repr_update_freq = repr_update_freq 
         self.actor = Actor(
             obs_shape, action_shape, hidden_dim, encoder_type,
             encoder_feature_dim, actor_log_std_min, actor_log_std_max,
@@ -272,7 +273,7 @@ class SacSimsiamAgent(object):
         self.training = training
         self.actor.train(training)
         self.critic.train(training)
-
+        ##self.
     @property
     def alpha(self):
         return self.log_alpha.exp()

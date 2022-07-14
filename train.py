@@ -59,6 +59,7 @@ def parse_args():
     parser.add_argument('--decoder_update_freq', default=1, type=int)
     parser.add_argument('--decoder_latent_lambda', default=1e-6, type=float)
     parser.add_argument('--decoder_weight_lambda', default=1e-7, type=float)
+    parser.add_argument('--repr_update_freq', default=1, type=int)
     parser.add_argument('--num_layers', default=4, type=int)
     parser.add_argument('--num_filters', default=32, type=int)
     # sac
@@ -151,6 +152,7 @@ def make_agent(obs_shape, action_shape, args, device):
             encoder_feature_dim=args.encoder_feature_dim,
             encoder_lr=args.encoder_lr,
             encoder_tau=args.encoder_tau,
+            repr_update_freq=args.repr_update_freq,
             num_layers=args.num_layers,
             num_filters=args.num_filters
         )
