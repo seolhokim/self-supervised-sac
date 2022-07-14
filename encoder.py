@@ -32,7 +32,8 @@ class PixelEncoder(nn.Module):
         self.ln = nn.LayerNorm(self.feature_dim)
 
         self.outputs = dict()
-
+        self.output_dim = out_dim
+        
     def reparameterize(self, mu, logstd):
         std = torch.exp(logstd)
         eps = torch.randn_like(std)

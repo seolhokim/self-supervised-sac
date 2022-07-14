@@ -236,7 +236,7 @@ class SacSimsiamAgent(object):
             encoder_feature_dim, num_layers, num_filters
         ).to(device)
         
-        self.simsiam = SimSiam(critic.encoder)
+        self.simsiam = SimSiam(self.critic.encoder).to(device)
         self.augmentation = SimSiamTransform(obs_shape[1], device) #assumed height == width
         
         self.critic_target.load_state_dict(self.critic.state_dict())
@@ -248,10 +248,9 @@ class SacSimsiamAgent(object):
         self.log_alpha.requires_grad = True
         # set target entropy to -|A|
         self.target_entropy = -np.prod(action_shape)
-        
-        self.encoder_optimizer = torch.optim.Adam(
-            self.simsiam, lr=encoder_lr
-        )
+        self.encoder_optimizer = torch.optim.Adam(list(self.simsiam.encoder.parameters()) +\
+                                                  list(self.simsiam.predictor.parameters()), \
+                                                  lr=encoder_lr)
         
         # optimizers
         self.actor_optimizer = torch.optim.Adam(

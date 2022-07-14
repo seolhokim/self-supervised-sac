@@ -17,7 +17,7 @@ from logger import Logger
 from video import VideoRecorder
 
 from sac_ae import SacAeAgent
-
+from sac_simsiam import SacSimsiamAgent
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -30,7 +30,7 @@ def parse_args():
     # replay buffer
     parser.add_argument('--replay_buffer_capacity', default=1000000, type=int)
     # train
-    parser.add_argument('--agent', default='sac_ae', type=str)
+    parser.add_argument('--agent', default='sac_simsiam', type=str)
     parser.add_argument('--init_steps', default=1000, type=int)
     parser.add_argument('--num_train_steps', default=1000000, type=int)
     parser.add_argument('--batch_size', default=128, type=int)
@@ -49,11 +49,16 @@ def parse_args():
     parser.add_argument('--actor_log_std_min', default=-10, type=float)
     parser.add_argument('--actor_log_std_max', default=2, type=float)
     parser.add_argument('--actor_update_freq', default=2, type=int)
-    # encoder
+    # encoder/decoder
     parser.add_argument('--encoder_type', default='pixel', type=str)
     parser.add_argument('--encoder_feature_dim', default=50, type=int)
     parser.add_argument('--encoder_lr', default=1e-3, type=float)
     parser.add_argument('--encoder_tau', default=0.05, type=float)
+    parser.add_argument('--decoder_type', default='pixel', type=str)
+    parser.add_argument('--decoder_lr', default=1e-3, type=float)
+    parser.add_argument('--decoder_update_freq', default=1, type=int)
+    parser.add_argument('--decoder_latent_lambda', default=1e-6, type=float)
+    parser.add_argument('--decoder_weight_lambda', default=1e-7, type=float)
     parser.add_argument('--num_layers', default=4, type=int)
     parser.add_argument('--num_filters', default=32, type=int)
     # sac
@@ -94,6 +99,37 @@ def evaluate(env, agent, video, num_episodes, L, step):
 def make_agent(obs_shape, action_shape, args, device):
     if args.agent == 'sac_ae':
         return SacAeAgent(
+            obs_shape=obs_shape,
+            action_shape=action_shape,
+            device=device,
+            hidden_dim=args.hidden_dim,
+            discount=args.discount,
+            init_temperature=args.init_temperature,
+            alpha_lr=args.alpha_lr,
+            alpha_beta=args.alpha_beta,
+            actor_lr=args.actor_lr,
+            actor_beta=args.actor_beta,
+            actor_log_std_min=args.actor_log_std_min,
+            actor_log_std_max=args.actor_log_std_max,
+            actor_update_freq=args.actor_update_freq,
+            critic_lr=args.critic_lr,
+            critic_beta=args.critic_beta,
+            critic_tau=args.critic_tau,
+            critic_target_update_freq=args.critic_target_update_freq,
+            encoder_type=args.encoder_type,
+            encoder_feature_dim=args.encoder_feature_dim,
+            encoder_lr=args.encoder_lr,
+            encoder_tau=args.encoder_tau,
+            decoder_type=args.decoder_type,
+            decoder_lr=args.decoder_lr,
+            decoder_update_freq=args.decoder_update_freq,
+            decoder_latent_lambda=args.decoder_latent_lambda,
+            decoder_weight_lambda=args.decoder_weight_lambda,
+            num_layers=args.num_layers,
+            num_filters=args.num_filters
+        )
+    elif args.agent == 'sac_simsiam':
+        return SacSimsiamAgent(
             obs_shape=obs_shape,
             action_shape=action_shape,
             device=device,
