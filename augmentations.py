@@ -1,9 +1,11 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch import Tensor
 from typing import Any, List, Sequence, Optional
 
 class GaussianBlur(torch.nn.Module):
+    #https://github.com/facebookresearch/simsiam
     """Blurs image with randomly chosen Gaussian blur.
     The image can be a PIL Image or a Tensor, in which case it is expected
     to have [..., C, H, W] shape, where ... means an arbitrary number of leading
@@ -83,13 +85,48 @@ try:
     from torchvision.transforms import GaussianBlur
 except ImportError:
     T.GaussianBlur = GaussianBlur
+    
+#https://github.com/facebookresearch/drqv2/blob/main/drqv2.py
+class RandomShiftsAug(nn.Module):
+    def __init__(self, pad):
+        super().__init__()
+        self.pad = pad
 
+    def forward(self, x):
+        n, c, h, w = x.size()
+        assert h == w
+        padding = tuple([self.pad] * 4)
+        x = F.pad(x, padding, 'replicate')
+        eps = 1.0 / (h + 2 * self.pad)
+        arange = torch.linspace(-1.0 + eps,
+                                1.0 - eps,
+                                h + 2 * self.pad,
+                                device=x.device,
+                                dtype=x.dtype)[:h]
+        arange = arange.unsqueeze(0).repeat(h, 1).unsqueeze(2)
+        base_grid = torch.cat([arange, arange.transpose(1, 0)], dim=2)
+        base_grid = base_grid.unsqueeze(0).repeat(n, 1, 1, 1)
+
+        shift = torch.randint(0,
+                              2 * self.pad + 1,
+                              size=(n, 1, 1, 2),
+                              device=x.device,
+                              dtype=x.dtype)
+        shift *= 2.0 / (h + 2 * self.pad)
+
+        grid = base_grid + shift
+        return F.grid_sample(x,
+                             grid,
+                             padding_mode='zeros',
+                             align_corners=False)
 class SimSiamTransform():
+    #https://github.com/facebookresearch/simsiam
     def __init__(self, image_size, device = 'cuda'):
         p_blur = 0.5 if image_size > 32 else 0 # exclude cifar
         # the paper didn't specify this, feel free to change this value
         # I use the setting from simclr which is 50% chance applying the gaussian blur
         # the 32 is prepared for cifar training where they disabled gaussian blur
+        '''
         self.transform = nn.Sequential(
             #T.RandomApply([T.RandomRotation(30)], p=0.8),
             #T.RandomApply([T.RandomAffine(0, translate=(0.1, 0.2))], p=0.8),
@@ -99,14 +136,20 @@ class SimSiamTransform():
             T.RandomApply([\
                 T.GaussianBlur(kernel_size=image_size//20*2+1, sigma=(0.1, 2.0))], p=p_blur),
                 ).to(device)
+        '''
+        self.transform = RandomShiftsAug(4)
     def __call__(self, x1, x2 = None):
         if x2 == None:
             x2 = x1.clone()
+        '''
         batch_size, channel_size, height, width = x1.shape
         if channel_size != 3: 
             x1 = x1.reshape(-1, 3, height, width)
             x2 = x2.reshape(-1, 3, height, width)
         x1 = self.transform(x1).reshape(-1, channel_size, height, width)
         x2 = self.transform(x2).reshape(-1, channel_size, height, width)
+        '''
+        x1 = self.transform(x1)
+        x2 = self.transform(x2)
         return x1, x2 
     
