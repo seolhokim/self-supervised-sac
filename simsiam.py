@@ -19,7 +19,7 @@ def D(p, z, version='simplified'): # negative cosine similarity
 
 
 class projection_MLP(nn.Module):
-    def __init__(self, in_dim, hidden_dim=2048, out_dim=2048):
+    def __init__(self, in_dim, hidden_dim=16, out_dim=50):
         super().__init__()
         ''' page 3 baseline setting
         Projection MLP. The projection MLP (in f) has BN ap-
@@ -39,7 +39,7 @@ class projection_MLP(nn.Module):
         )
         self.layer3 = nn.Sequential(
             nn.Linear(hidden_dim, out_dim),
-            nn.BatchNorm1d(hidden_dim)
+            nn.BatchNorm1d(out_dim)
         )
         self.num_layers = 3
     def set_layers(self, num_layers):
@@ -59,7 +59,7 @@ class projection_MLP(nn.Module):
 
 
 class prediction_MLP(nn.Module):
-    def __init__(self, in_dim=2048, hidden_dim=512, out_dim=2048): # bottleneck structure
+    def __init__(self, in_dim=50, hidden_dim=16, out_dim=50): # bottleneck structure
         super().__init__()
         ''' page 3 baseline setting
         Prediction MLP. The prediction MLP (h) has BN applied 
