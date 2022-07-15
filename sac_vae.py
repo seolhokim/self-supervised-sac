@@ -371,7 +371,7 @@ class SacVaeAgent(object):
             # preprocess images to be in [-0.5, 0.5] range
             target_obs = utils.preprocess_obs(target_obs)
         rec_obs = self.decoder(h)
-        rec_loss = F.mse_loss(target_obs, rec_obs)
+        rec_loss = F.mse_loss(rec_obs, target_obs)
         kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim = 1), dim = 0)
         # add L2 penalty on latent representation
         # see https://arxiv.org/pdf/1903.12436.pdf

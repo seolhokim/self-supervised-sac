@@ -34,7 +34,7 @@ class PixelEncoder(nn.Module):
         self.outputs = dict()
 
     def reparameterize(self, mu, logvar):
-        std = torch.exp(logvar)
+        std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         return mu + eps * std
 
@@ -108,7 +108,7 @@ class IdentityEncoder(nn.Module):
 
 
 class PixelVaeEncoder(PixelEncoder):
-    def __init__(self, obs_shape, feature_dim, num_layers=2, num_filters=32, latent_dim=16):
+    def __init__(self, obs_shape, feature_dim, num_layers=2, num_filters=32, latent_dim=25):
         super(PixelVaeEncoder, self).__init__(obs_shape, feature_dim, num_layers, num_filters)
         self.latent_dim = latent_dim
         self.mu = nn.Linear(feature_dim, latent_dim)
@@ -126,7 +126,7 @@ class PixelVaeEncoder(PixelEncoder):
         h_norm = self.ln(h_fc)
         self.outputs['ln'] = h_norm
 
-        out = torch.tanh(h_norm)
+        out = torch.relu(h_norm)
         self.outputs['tanh'] = out
 
         mu = self.mu(out)

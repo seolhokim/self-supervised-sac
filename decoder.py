@@ -42,6 +42,7 @@ class PixelDecoder(nn.Module):
             self.outputs['deconv%s' % (i + 1)] = deconv
 
         obs = self.deconvs[-1](deconv)
+        obs = torch.tanh(obs)
         self.outputs['obs'] = obs
 
         return obs
