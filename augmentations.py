@@ -126,17 +126,15 @@ class SimSiamTransform():
         # the paper didn't specify this, feel free to change this value
         # I use the setting from simclr which is 50% chance applying the gaussian blur
         # the 32 is prepared for cifar training where they disabled gaussian blur
-        '''
         self.transform = nn.Sequential(
-            #T.RandomApply([T.RandomRotation(30)], p=0.8),
+            T.RandomApply([T.RandomRotation(30)], p=0.8),
             #T.RandomApply([T.RandomAffine(0, translate=(0.1, 0.2))], p=0.8),
-            T.RandomResizedCrop(image_size, scale=(0.5, 1.0)),
-            T.RandomApply([T.ColorJitter(0.4,0.4,0.4,0.1)], p=0.8),
+            T.RandomResizedCrop(image_size, scale=(0.6, 1.0)),
+            #T.RandomApply([T.ColorJitter(0.4,0.4,0.4,0.1)], p=0.8),
             T.RandomGrayscale(p=0.2),
-            T.RandomApply([\
-                T.GaussianBlur(kernel_size=image_size//20*2+1, sigma=(0.1, 2.0))], p=p_blur),
+            #T.RandomApply([T.GaussianBlur(kernel_size=image_size//20*2+1, sigma=(0.1, 2.0))], p=p_blur),
                 ).to(device)
-        '''
+
         self.transform = RandomShiftsAug(4)
     def __call__(self, x1, x2 = None):
         if x2 == None:
