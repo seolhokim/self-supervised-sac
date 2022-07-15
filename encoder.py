@@ -30,11 +30,11 @@ class PixelEncoder(nn.Module):
         out_dim = OUT_DIM[num_layers]
         self.fc = nn.Linear(num_filters * out_dim * out_dim, self.feature_dim)
         self.ln = nn.LayerNorm(self.feature_dim)
-
+        
         self.outputs = dict()
 
-    def reparameterize(self, mu, logstd):
-        std = torch.exp(logstd)
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(logvar)
         eps = torch.randn_like(std)
         return mu + eps * std
 
@@ -107,13 +107,45 @@ class IdentityEncoder(nn.Module):
         pass
 
 
-_AVAILABLE_ENCODERS = {'pixel': PixelEncoder, 'identity': IdentityEncoder}
+class PixelVaeEncoder(PixelEncoder):
+    def __init__(self, obs_shape, feature_dim, num_layers=2, num_filters=32, latent_dim=16):
+        super(PixelVaeEncoder, self).__init__(obs_shape, feature_dim, num_layers, num_filters)
+        
+        self.mu = nn.Linear(feature_dim, latent_dim)
+        self.log_var = nn.Linear(feature_dim, latent_dim)
+        
+    def forward(self, obs, detach=False):
+        h = self.forward_conv(obs)
 
+        if detach:
+            h = h.detach()
+
+        h_fc = self.fc(h)
+        self.outputs['fc'] = h_fc
+
+        h_norm = self.ln(h_fc)
+        self.outputs['ln'] = h_norm
+
+        out = torch.tanh(h_norm)
+        self.outputs['tanh'] = out
+
+        mu = self.mu(out)
+        log_var = self.log_var(out)
+        z = self.reparameterize(mu,log_var)
+        return z, (mu, log_var)
+    
+
+_AVAILABLE_ENCODERS = {'pixel': PixelEncoder, 'identity': IdentityEncoder, 'pixel-vae' : PixelVaeEncoder}
 
 def make_encoder(
-    encoder_type, obs_shape, feature_dim, num_layers, num_filters
+    encoder_type, obs_shape, feature_dim, num_layers, num_filters, latent_dim=None
 ):
     assert encoder_type in _AVAILABLE_ENCODERS
-    return _AVAILABLE_ENCODERS[encoder_type](
-        obs_shape, feature_dim, num_layers, num_filters
-    )
+    if latent_dim == None:
+        return _AVAILABLE_ENCODERS[encoder_type](
+            obs_shape, feature_dim, num_layers, num_filters
+        )
+    else :
+        return _AVAILABLE_ENCODERS[encoder_type](
+            obs_shape, feature_dim, num_layers, num_filters, latent_dim
+        )
