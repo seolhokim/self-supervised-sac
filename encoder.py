@@ -110,7 +110,7 @@ class IdentityEncoder(nn.Module):
 class PixelVaeEncoder(PixelEncoder):
     def __init__(self, obs_shape, feature_dim, num_layers=2, num_filters=32, latent_dim=16):
         super(PixelVaeEncoder, self).__init__(obs_shape, feature_dim, num_layers, num_filters)
-        
+        self.latent_dim = latent_dim
         self.mu = nn.Linear(feature_dim, latent_dim)
         self.log_var = nn.Linear(feature_dim, latent_dim)
         

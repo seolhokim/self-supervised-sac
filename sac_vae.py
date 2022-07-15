@@ -52,7 +52,6 @@ class Actor(nn.Module):
         encoder_feature_dim, log_std_min, log_std_max, num_layers, num_filters
     ):
         super().__init__()
-
         self.encoder = make_encoder(
             encoder_type, obs_shape, encoder_feature_dim, num_layers,
             num_filters
@@ -204,7 +203,7 @@ class SacVaeAgent(object):
         critic_beta=0.9,
         critic_tau=0.005,
         critic_target_update_freq=2,
-        encoder_type='pixel',
+        encoder_type='pixel-vae',
         encoder_feature_dim=50,
         encoder_lr=1e-3,
         encoder_tau=0.005,
@@ -230,7 +229,6 @@ class SacVaeAgent(object):
             encoder_feature_dim, actor_log_std_min, actor_log_std_max,
             num_layers, num_filters
         ).to(device)
-
         self.critic = Critic(
             obs_shape, action_shape, hidden_dim, encoder_type,
             encoder_feature_dim, num_layers, num_filters
@@ -255,7 +253,7 @@ class SacVaeAgent(object):
         if decoder_type != 'identity':
             # create decoder
             self.decoder = make_decoder(
-                decoder_type, obs_shape, encoder_feature_dim, num_layers,
+                decoder_type, obs_shape, self.critic.encoder.latent_dim, num_layers,
                 num_filters
             ).to(device)
             self.decoder.apply(weight_init)

@@ -68,7 +68,7 @@ def parse_args():
     parser.add_argument('--alpha_beta', default=0.5, type=float)
     # misc
     parser.add_argument('--seed', default=1, type=int)
-    parser.add_argument('--work_dir', default='.', type=str)
+    parser.add_argument('--work_dir', default='./log/', type=str)
     parser.add_argument('--save_tb', default=True, action='store_true')
     parser.add_argument('--save_model', default=False, action='store_true')
     parser.add_argument('--save_buffer', default=False, action='store_true')
@@ -131,7 +131,7 @@ def make_agent(obs_shape, action_shape, args, device):
         )
     elif args.agent == 'sac_vae':
         print("sac_vae initialized")
-        return SacAeAgent(
+        return SacVaeAgent(
             obs_shape=obs_shape,
             action_shape=action_shape,
             device=device,
@@ -149,11 +149,11 @@ def make_agent(obs_shape, action_shape, args, device):
             critic_beta=args.critic_beta,
             critic_tau=args.critic_tau,
             critic_target_update_freq=args.critic_target_update_freq,
-            encoder_type=args.encoder_type,
+            encoder_type='pixel-vae',
             encoder_feature_dim=args.encoder_feature_dim,
             encoder_lr=args.encoder_lr,
             encoder_tau=args.encoder_tau,
-            decoder_type=args.decoder_type,
+            decoder_type='pixel',
             decoder_lr=args.decoder_lr,
             decoder_update_freq=args.decoder_update_freq,
             decoder_latent_lambda=args.decoder_latent_lambda,
@@ -167,6 +167,8 @@ def make_agent(obs_shape, action_shape, args, device):
 
 def main():
     args = parse_args()
+    from datetime import datetime
+    args.work_dir += datetime.now().strftime("%Y%m%d-%H%M%S")
     utils.set_seed_everywhere(args.seed)
 
     env = dmc2gym.make(
