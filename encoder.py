@@ -108,11 +108,13 @@ class IdentityEncoder(nn.Module):
 
 
 class PixelVaeEncoder(PixelEncoder):
-    def __init__(self, obs_shape, feature_dim, num_layers=2, num_filters=32, latent_dim=25):
+    def __init__(self, obs_shape, feature_dim, num_layers=2, num_filters=32, latent_dim=50):
         super(PixelVaeEncoder, self).__init__(obs_shape, feature_dim, num_layers, num_filters)
         self.latent_dim = latent_dim
-        self.mu = nn.Linear(feature_dim, latent_dim)
-        self.log_var = nn.Linear(feature_dim, latent_dim)
+        #del self.fc
+        out_dim = OUT_DIM[num_layers]
+        self.mu = nn.Linear(num_filters * out_dim * out_dim, latent_dim)
+        self.log_var = nn.Linear(num_filters * out_dim * out_dim, latent_dim)
         
     def forward(self, obs, detach=False):
         h = self.forward_conv(obs)
@@ -120,17 +122,8 @@ class PixelVaeEncoder(PixelEncoder):
         if detach:
             h = h.detach()
 
-        h_fc = self.fc(h)
-        self.outputs['fc'] = h_fc
-
-        h_norm = self.ln(h_fc)
-        self.outputs['ln'] = h_norm
-
-        out = torch.relu(h_norm)
-        self.outputs['tanh'] = out
-
-        mu = self.mu(out)
-        log_var = self.log_var(out)
+        mu = self.mu(h)
+        log_var = self.log_var(h)
         z = self.reparameterize(mu,log_var)
         return z, (mu, log_var)
     

@@ -369,7 +369,8 @@ class SacVaeAgent(object):
 
         if target_obs.dim() == 4:
             # preprocess images to be in [-0.5, 0.5] range
-            target_obs = utils.preprocess_obs(target_obs)
+            #target_obs = utils.preprocess_obs(target_obs)
+            target_obs = target_obs / 255.
         rec_obs = self.decoder(h)
         rec_loss = F.mse_loss(rec_obs, target_obs)
         kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim = 1), dim = 0)
@@ -377,7 +378,7 @@ class SacVaeAgent(object):
         # see https://arxiv.org/pdf/1903.12436.pdf
         latent_loss = (0.5 * h.pow(2).sum(1)).mean()
 
-        loss = rec_loss + kld_loss + self.decoder_latent_lambda * latent_loss
+        loss = rec_loss + kld_loss #+ self.decoder_latent_lambda * latent_loss
         self.encoder_optimizer.zero_grad()
         self.decoder_optimizer.zero_grad()
         loss.backward()
